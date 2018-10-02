@@ -106,7 +106,7 @@ class CurrencyUpdateCommand extends Command
         $this->info('Updating currency exchange rates from OpenExchangeRates.org...');
 
         // Make request
-        $content = json_decode($this->request("http://openexchangerates.org/api/latest.json?base={$defaultCurrency}&app_id={$api}"));
+        $content = json_decode($this->request("http://openexchangerates.org/api/latest.json?app_id={$api}"));
 
         // Error getting content?
         if (isset($content->error)) {
@@ -115,7 +115,12 @@ class CurrencyUpdateCommand extends Command
         }
 
         // Parse timestamp for DB
-        $timestamp = new DateTime(strtotime($content->timestamp));
+        $timestamp = new DateTime($content->timestamp);
+
+        $rate = 1 / $content->rates->{$defaultCurrency};
+        foreach ($content->rates as $code => &$value) {
+            $value = $value * $rate;
+        }
 
         // Update each rate
         foreach ($content->rates as $code => $value) {
